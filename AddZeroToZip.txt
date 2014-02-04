@@ -1,0 +1,62 @@
+Option Explicit
+
+Sub AddZeroToZip()
+
+'Adds a leading zero to zipcodes as necessary (such as PR, NJ, etc)
+
+Dim ColumnLen As Long
+
+Dim Cell As Long
+
+Dim i As Long
+
+
+Cell = 0
+
+Application.ScreenUpdating = False
+
+' finds total length of selected column
+
+ColumnLen = ActiveSheet.Cells(Rows.Count, ActiveCell.Column).End(xlUp).Row
+
+' adds a new column
+ActiveCell.EntireColumn.Offset(0, 1).Insert
+
+
+' adds "Zip" to the top cell and adds a zero in front of any numbers with length less
+' than 4
+'Do Until Cell = ColumnLen
+'
+'    If Cell = 0 Then
+'    ActiveCell.Offset(Cell, 1).Value = "Zip"
+'    Else
+'
+'    ActiveCell.Offset(Cell, 1).Value = "=if(len(RC[-1])>4,""""&RC[-1],""0""&RC[-1])"
+'    End If
+'    Cell = Cell + 1
+'
+'Loop
+
+i = ActiveCell.Column
+
+ActiveCell.Offset(0, 1).Value = "=if(len(RC[-1])>4,""""&RC[-1],""0""&RC[-1])"
+
+Range(Cells(1, i + 1), Cells(ColumnLen, i + 1)).FillDown
+       
+
+' copies new column, pastes it as plain text, clears any cells that contain only 0,
+' deletes former zip code column
+ActiveCell.EntireColumn.Offset(0, 1).Copy
+ActiveCell.EntireColumn.Offset(0, 1).PasteSpecial Paste:=xlPasteValues, Operation:=xlNone
+Application.CutCopyMode = False
+ActiveCell.EntireColumn.Replace What:="0", Replacement:="", Lookat:=xlWhole
+ActiveCell.EntireColumn.Offset(0, -1).Delete
+
+ActiveCell.Offset(0, -1).Select
+ActiveCell.Value = "Zip"
+
+Application.ScreenUpdating = True
+
+End Sub
+
+

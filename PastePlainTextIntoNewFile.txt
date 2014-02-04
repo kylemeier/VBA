@@ -1,0 +1,74 @@
+Option Explicit
+
+Sub PastePlaintextIntoNewFile()
+'
+' Copies and pastes an entire workbook into a new file in plaintext
+' Reformats DOB column to m/d/yyyy
+
+'
+Dim LastCol As Long
+Dim FormatCol As Long
+Dim DOB As Variant
+Dim byteAnswer As Byte
+
+'search for a column titled dob
+
+Set DOB = Cells.Find(What:="DOB", after:=Range("A1"), LookIn:=xlValues, Lookat:=xlWhole, SearchOrder:=xlByRows)
+
+If DOB Is Nothing Then
+
+byteAnswer = MsgBox("Is the date of birth column titled DOB? If not, please rename it. If there is no date of birth column, click Yes", _
+    vbYesNo + vbDefaultButton2 + vbQuestion)
+    
+    If byteAnswer = vbNo Then
+
+        Exit Sub
+
+    Else
+    
+'Copy current workbook, open new workbook, paste values as plaintext
+    Cells.Copy
+    Workbooks.Add
+    Selection.PasteSpecial Paste:=xlPasteValues, Operation:=xlNone, SkipBlanks _
+        :=False, Transpose:=False
+        
+'Reformat DOB column to date instead of plaintext
+'Find last column with data in Row 1
+    LastCol = Cells(1, Columns.Count).End(xlToLeft).Column
+'Loop through columns, starting at the last one
+    For FormatCol = LastCol To 1 Step -1
+'Format column titled DOB in Row 1
+   If Cells(1, FormatCol) = "DOB" Then _
+     Cells(1, FormatCol).EntireColumn.NumberFormat = "m/d/yyyy"
+    Next
+       
+'Expands columns to fix text
+    Cells.EntireColumn.AutoFit
+End If
+Else
+
+'Copy current workbook, open new workbook, paste values as plaintext
+    Cells.Copy
+    Workbooks.Add
+    Selection.PasteSpecial Paste:=xlPasteValues, Operation:=xlNone, SkipBlanks _
+        :=False, Transpose:=False
+
+
+        
+'Reformat DOB column to date instead of plaintext
+'Find last column with data in Row 1
+    LastCol = Cells(1, Columns.Count).End(xlToLeft).Column
+'Loop through columns, starting at the last one
+    For FormatCol = LastCol To 1 Step -1
+'Format column titled DOB in Row 1
+   If Cells(1, FormatCol) = "DOB" Then _
+     Cells(1, FormatCol).EntireColumn.NumberFormat = "m/d/yyyy"
+    Next
+    
+'Expands columns to fix text
+    Cells.EntireColumn.AutoFit
+
+End If
+MsgBox ("CHECK DOBs!!!!!")
+
+End Sub

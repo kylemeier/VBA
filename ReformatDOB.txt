@@ -1,0 +1,113 @@
+Option Explicit
+
+Sub DOB()
+'reformats DOBs when they come in as 10241987 or 19871024 into 10/24/1987
+
+
+Dim ColumnLen As Long
+
+Dim i As Byte
+
+Dim byteOrientation As Byte
+
+byteOrientation = Application.InputBox("If MMDDYYYY enter 1. If YYYYMMDD enter 2.")
+
+'exit sub if user isn't sure
+If byteOrientation = 0 Then
+
+Exit Sub
+
+End If
+
+Application.ScreenUpdating = False
+
+' finds total length of selected column
+
+ColumnLen = ActiveSheet.Cells(Rows.Count, ActiveCell.Column).End(xlUp).Row
+
+' adds four new columns
+For i = 1 To 4:
+ActiveCell.EntireColumn.Offset(0, 1).Insert
+
+Next
+
+
+'
+i = ActiveCell.Column
+
+If byteOrientation = 1 Then
+    
+    ActiveCell.Offset(0, 1).Value = "=LEFT(RC[-1],LEN(RC[-1])-6)"
+
+    With Range(Cells(1, i + 1), Cells(ColumnLen, i + 1))
+        .FillDown
+       
+    End With
+
+    ActiveCell.Offset(0, 2).Value = "=MID(RC[-2],LEN(RC[-1])+1,2)"
+
+    With Range(Cells(1, i + 2), Cells(ColumnLen, i + 2))
+        .FillDown
+      
+    End With
+
+    ActiveCell.Offset(0, 3).Value = "=RIGHT(RC[-3],4)"
+
+    With Range(Cells(1, i + 3), Cells(ColumnLen, i + 3))
+        .FillDown
+       
+    End With
+    
+End If
+
+If byteOrientation = 2 Then
+
+    ActiveCell.Offset(0, 1).Value = "=MID(RC[-1],5,2)"
+
+    With Range(Cells(1, i + 1), Cells(ColumnLen, i + 1))
+        .FillDown
+       
+    End With
+
+    ActiveCell.Offset(0, 2).Value = "=RIGHT(RC[-2],2)"
+
+    With Range(Cells(1, i + 2), Cells(ColumnLen, i + 2))
+        .FillDown
+      
+    End With
+
+    ActiveCell.Offset(0, 3).Value = "=LEFT(RC[-3],4)"
+
+    With Range(Cells(1, i + 3), Cells(ColumnLen, i + 3))
+        .FillDown
+       
+    End With
+
+End If
+
+ActiveCell.Offset(0, 4).Value = "=RC[-3]&""/""&RC[-2]&""/""&RC[-1]"
+
+With Range(Cells(1, i + 4), Cells(ColumnLen, i + 4))
+    .FillDown
+       
+End With
+
+' copies new column, pastes it as plain text, clears any cells that contains #VALUE!,
+' deletes extra columns
+ActiveCell.EntireColumn.Offset(0, 4).Copy
+ActiveCell.EntireColumn.Offset(0, 4).PasteSpecial Paste:=xlPasteValues, Operation:=xlNone
+Application.CutCopyMode = False
+ActiveCell.EntireColumn.Replace What:="#VALUE!", Replacement:="", Lookat:=xlPart
+
+For i = 1 To 3:
+
+ActiveCell.EntireColumn.Offset(0, -3).Delete
+
+Next
+ActiveCell.Offset(0, -4).Select
+ActiveCell.Value = "Original Column"
+ActiveCell.Offset(0, 1).Value = "DOB"
+
+Application.ScreenUpdating = True
+
+End Sub

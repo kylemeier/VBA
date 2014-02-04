@@ -1,0 +1,275 @@
+Option Explicit
+
+Sub NameSplit()
+
+'Split names in a single column without proper delimeters into appropriate first name, middle name, and last name columns
+
+Dim ColumnLen As Long
+
+Dim HighestValue As Long
+
+Dim byteOrientation As Byte
+
+Dim NameArray As Variant
+
+Dim i As Integer
+
+byteOrientation = Application.InputBox("If the names are arranged First Middle Last enter a 1. If the names are arranged Last First Middle enter a 2. If you aren't sure, click Cancel.")
+
+'exit sub if user isn't sure
+If byteOrientation = 0 Then
+
+Exit Sub
+
+End If
+
+Application.ScreenUpdating = False
+
+ColumnLen = ActiveSheet.Cells(Rows.Count, ActiveCell.Column).End(xlUp).Row
+
+
+'remove extra titles, spaces, commas
+With ActiveCell.EntireColumn
+    .Replace What:=",jr ", Replacement:=" ", Lookat:=xlPart, _
+        SearchOrder:=xlByRows, MatchCase:=False, SearchFormat:=False, _
+        ReplaceFormat:=False
+    .Replace What:=" jr ", Replacement:=" ", Lookat:=xlPart, _
+        SearchOrder:=xlByRows, MatchCase:=False, SearchFormat:=False, _
+        ReplaceFormat:=False
+    .Replace What:=",sr ", Replacement:=" ", Lookat:=xlPart, _
+        SearchOrder:=xlByRows, MatchCase:=False, SearchFormat:=False, _
+        ReplaceFormat:=False
+    .Replace What:=" sr ", Replacement:=" ", Lookat:=xlPart, _
+        SearchOrder:=xlByRows, MatchCase:=False, SearchFormat:=False, _
+        ReplaceFormat:=False
+    .Replace What:=" II", Replacement:=" ", Lookat:=xlPart, _
+        SearchOrder:=xlByRows, MatchCase:=False, SearchFormat:=False, _
+        ReplaceFormat:=False
+    .Replace What:=" III", Replacement:=" ", Lookat:=xlPart, _
+        SearchOrder:=xlByRows, MatchCase:=False, SearchFormat:=False, _
+        ReplaceFormat:=False
+    .Replace What:=" dr ", Replacement:=" ", Lookat:=xlPart, _
+        SearchOrder:=xlByRows, MatchCase:=False, SearchFormat:=False, _
+        ReplaceFormat:=False
+    .Replace What:=" md ", Replacement:=" ", Lookat:=xlPart, _
+        SearchOrder:=xlByRows, MatchCase:=False, SearchFormat:=False, _
+        ReplaceFormat:=False
+    .Replace What:="Mr. ", Replacement:="", Lookat:=xlPart, _
+        SearchOrder:=xlByRows, MatchCase:=False, SearchFormat:=False, _
+        ReplaceFormat:=False
+    .Replace What:="Mrs. ", Replacement:="", Lookat:=xlPart, _
+        SearchOrder:=xlByRows, MatchCase:=False, SearchFormat:=False, _
+        ReplaceFormat:=False
+    .Replace What:="mrs. ", Replacement:="", Lookat:=xlPart, _
+        SearchOrder:=xlByRows, MatchCase:=False, SearchFormat:=False, _
+        ReplaceFormat:=False
+    .Replace What:="Ms. ", Replacement:="", Lookat:=xlPart, _
+        SearchOrder:=xlByRows, MatchCase:=False, SearchFormat:=False, _
+        ReplaceFormat:=False
+    .Replace What:=".", Replacement:="", Lookat:=xlPart, _
+        SearchOrder:=xlByRows, MatchCase:=False, SearchFormat:=False, _
+        ReplaceFormat:=False
+    .Replace What:=",", Replacement:=" ", Lookat:=xlPart, _
+        SearchOrder:=xlByRows, MatchCase:=False, SearchFormat:=False, _
+        ReplaceFormat:=False
+    .Replace What:="  ", Replacement:=" ", Lookat:=xlPart, _
+        SearchOrder:=xlByRows, MatchCase:=False, SearchFormat:=False, _
+        ReplaceFormat:=False
+        
+    End With
+    
+'trimming column A, putting it into a newly created column B, converting
+'to plaintext and removing column A
+
+i = ActiveCell.Column
+ 
+ActiveCell.EntireColumn.Offset(0, 1).Insert
+ActiveCell.Offset(0, 1).Value = "=trim(RC[-1])"
+
+With Range(Cells(1, i + 1), Cells(ColumnLen, i + 1))
+   
+    .FillDown
+    .Copy
+    .PasteSpecial Paste:=xlPasteValues, Operation:=xlNone, SkipBlanks _
+        :=False, Transpose:=False
+        
+End With
+    ActiveCell.Offset(0, -1).Select
+    ActiveCell.EntireColumn.Delete
+    
+'add new columns and title them
+For i = 1 To 3
+
+ActiveCell.EntireColumn.Offset(0, 1).Insert
+Next
+
+ActiveCell = "Manual Check?"
+
+
+
+ActiveCell.Offset(0, 1).Value = "FirstName"
+ActiveCell.Offset(0, 2).Value = "Middle"
+ActiveCell.Offset(0, 3).Value = "LastName"
+
+'run split function on selected cell
+
+For i = 2 To ColumnLen
+
+ActiveCell.Offset(1, 0).Select
+
+If Not ActiveCell.Value = "" Then
+
+NameArray = NewName()
+
+    If byteOrientation = 1 Then
+
+        If NameArray(0) = 1 Then
+    
+        ActiveCell.Offset(0, 1).Value = NameArray(1)
+        ActiveCell.Offset(0, 3).Value = NameArray(2)
+    
+        End If
+    
+        If NameArray(0) = 2 Then
+    
+        ActiveCell.Offset(0, 1).Value = NameArray(1)
+        ActiveCell.Offset(0, 2).Value = NameArray(2)
+        ActiveCell.Offset(0, 3).Value = NameArray(3)
+        
+        End If
+    
+    End If
+    
+    If byteOrientation = 2 Then
+
+        If NameArray(0) = 1 Then
+    
+        ActiveCell.Offset(0, 1).Value = NameArray(2)
+        ActiveCell.Offset(0, 3).Value = NameArray(1)
+    
+        End If
+    
+        If NameArray(0) = 2 Then
+    
+        ActiveCell.Offset(0, 1).Value = NameArray(2)
+        ActiveCell.Offset(0, 2).Value = NameArray(3)
+        ActiveCell.Offset(0, 3).Value = NameArray(1)
+        
+        End If
+    
+    End If
+
+End If
+
+Next
+
+Cells.EntireColumn.AutoFit
+Application.ScreenUpdating = True
+
+End Sub
+
+Function NewName()
+
+Dim SpacesCount As Byte
+Dim First As String
+Dim Middle As String
+Dim Last As String
+Dim Name As String
+Dim LastSpace As Byte
+Dim AdjustedName As String
+Dim NameArray As Variant
+
+Name = ActiveCell
+
+On Error GoTo ErrorHandler
+
+
+'remove trailing jr, sr, etc
+LastSpace = InStrRev(ActiveCell, " ")
+
+If LastSpace > 0 Then
+
+    Last = Replace(expression:=Name, Find:=" ", Replace:="", Start:=LastSpace, Count:=1)
+
+    If LCase(Last) = "jr" Or LCase(Last) = "jr." Or LCase(Last) = "sr" Or LCase(Last) = "sr." Then
+
+    ActiveCell.Value = Left(Name, Len(Name) - 3)
+    Name = Trim(ActiveCell)
+    End If
+End If
+
+
+
+'parse out name if properly formatted
+
+SpacesCount = Len(Name) - Len(Replace(Name, " ", ""))
+
+If SpacesCount = 1 Then
+
+First = Left(Name, Len(Name) - Len(Last) - 1)
+
+NameArray = Array(SpacesCount, First, Last)
+NewName = NameArray
+ActiveCell.Value = "no"
+
+Exit Function
+End If
+
+If SpacesCount = 2 Then
+
+Selection.TextToColumns Destination:=ActiveCell.Offset(0, 1), DataType:=xlDelimited, _
+        TextQualifier:=xlDoubleQuote, ConsecutiveDelimiter:=False, Tab:=False, _
+        Semicolon:=False, Comma:=False, Space:=True, Other:=False
+        
+
+ 
+First = ActiveCell.Offset(0, 1).Value
+
+Middle = ActiveCell.Offset(0, 2).Value
+
+Last = ActiveCell.Offset(0, 3).Value
+
+
+NameArray = Array(SpacesCount, First, Middle, Last)
+NewName = NameArray
+
+ActiveCell.Value = "no"
+
+Exit Function
+
+End If
+
+'manually check names with more than two spaces
+
+If SpacesCount = 0 Or SpacesCount > 2 Then
+
+ActiveCell.Offset(0, 1).Value = ActiveCell.Value
+ActiveCell.Value = "yes"
+
+NameArray = Array(SpacesCount)
+
+NewName = NameArray
+
+Exit Function
+End If
+
+'manually check any names that cause an error, change spacescount to skip mapping in main procedure
+ErrorHandler:
+
+SpacesCount = 3
+
+ActiveCell.Offset(0, 1).Value = ActiveCell.Value
+ActiveCell.Offset(0, 2).Value = ""
+ActiveCell.Offset(0, 3).Value = ""
+
+ActiveCell.Value = "yes"
+
+NameArray = Array(SpacesCount)
+
+NewName = NameArray
+
+
+
+End Function
+
+

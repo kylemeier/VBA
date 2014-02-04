@@ -1,0 +1,35 @@
+Sub DelDups_TwoLists()
+' Remove already addressed user subbmitted eRx applications from the eRx application list
+
+Dim iListCount As Integer
+Dim iCtr As Integer
+Dim Criteria1 As Variant
+Dim Criteria2 As Variant
+
+' Turn off screen updating to speed up macro.
+Application.ScreenUpdating = False
+
+' Get count of records to search through (list that will be deleted).
+iListCount = Sheets("Sheet2").Cells(Rows.Count, ActiveCell.Column).End(xlUp).Row
+
+' Loop through the "master" list.
+i = 0
+For Each Criteria1 In Sheets("Sheet1").Range("D1:D100")
+    i = i + 1
+    Criteria2 = Sheets("Sheet1").Range("E" & i).Value
+   ' Loop through all records in the second list.
+   For iCtr = 1 To iListCount
+      ' Do comparison of next record.
+      ' To specify a different column, change 1 to the column number.
+      If Criteria1 = Sheets("Sheet2").Cells(iCtr, 4) And Criteria2 = Sheets("Sheet2").Cells(iCtr, 5) Then
+         ' If match is true then delete row.
+         Sheets("Sheet2").Cells(iCtr, 1).EntireRow.Delete xlShiftUp
+         Exit For
+         ' Increment counter to account for deleted row.
+         iCtr = iCtr + 1
+         i = i + 1
+      End If
+   Next iCtr
+Next
+Application.ScreenUpdating = True
+End Sub

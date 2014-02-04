@@ -1,0 +1,93 @@
+Sub aaSave()
+'
+' Saving macro
+' Saves file to correct folder and appends practiceid
+' Converts any . in file name to _ to allow file to be saved as the correct type
+'
+'
+Dim Practiceid As Variant
+Dim FileName As Variant
+Dim CurrentFile As Variant
+Dim CurrentCell As Variant
+    
+    On Error Resume Next
+    CurrentCell = Range("A1")
+    Practiceid = Application.InputBox("Enter practice ID.")
+    CurrentFile = Left(ActiveWorkbook.Name, (InStrRev(ActiveWorkbook.Name, ".", -1, vbTextCompare) - 1))
+
+' name current file 'Upload' if it doesn't yet have a name    
+    If CurrentFile = "" Then
+        CurrentFile = "Upload"
+    End If
+    
+    Application.ScreenUpdating = False
+    FileName = CurrentFile + "_" + Practiceid
+    Range("A1").Value = FileName
+    Range("A1").Replace What:=".", Replacement:="_", Lookat:=xlPart
+    FileName = Range("A1")
+    Range("A1").Value = CurrentCell
+    ActiveWorkbook.SaveAs FileName:= _
+        "C:\Users\kmeier\Desktop\Uploads\" + FileName, FileFormat:= _
+        xlExcel8, Password:="", WriteResPassword:="", ReadOnlyRecommended:=False _
+        , CreateBackup:=False
+    Application.ScreenUpdating = True
+    Application.Quit
+    
+End Sub
+
+Sub MWPAT()
+'
+' MWPAT Macro
+' Remove unnecessary columns/rows from Medisoft Files then save and close
+'
+' Keyboard Shortcut: Ctrl+Shift+M
+' example practice ID michaelosbornep5
+
+Dim Practiceid As Variant
+
+    Rows("1:2").Delete Shift:=xlUp
+    Columns("A:A").Delete Shift:=xlToLeft
+    
+'Find last column with data in Row 1
+    LastCol = Cells(1, Columns.Count).End(xlToLeft).Column
+'Loop through columns, starting at the last one
+    For delCol = LastCol To 1 Step -1
+'Delete columns with Inactive in Row 1
+   If Cells(1, delCol) = "Inactive" Then _
+     Cells(1, delCol).EntireColumn.Delete
+    Next
+     
+   aaSave
+   
+End Sub
+
+Sub OfficeAlly()
+
+'turn off screen flickering
+Application.ScreenUpdating = False
+
+'remove first four rows and shift up
+Rows("1:4").Delete Shift:=xlUp
+
+'Find last column with data in Row 1
+    LastCol = Cells(1, Columns.Count).End(xlToLeft).Column
+
+'Loop through columns, starting at the last one
+    For delCol = LastCol To 1 Step -1
+
+'Delete blank columns in Row 1
+   If Cells(1, delCol) = "" Then _
+     Cells(1, delCol).EntireColumn.Delete
+    Next
+
+'remove wrapping and expand columns
+Cells.WrapText = False
+Cells.EntireColumn.AutoFit
+    
+Application.ScreenUpdating = True
+
+aaSave
+
+End Sub
+
+

@@ -1,0 +1,131 @@
+Sub DeactivatedUsers()
+'Parse and reformat raw data from SureScripts to provide Customer Service with a list of deactivated eRx users
+
+'filter out blanks and copy to new file (or just filter, check if wiki interprets it correctly)
+'save and name itself
+
+Dim ColumnLen As Long
+
+Application.ScreenUpdating = False
+
+'rename sheet to delete later
+ActiveSheet.Name = "DeleteMe"
+
+'split by fixed with, make SPI column and date column text format
+    Range("A:A").TextToColumns Destination:=Range("A1"), DataType:=xlFixedWidth, _
+        TextQualifier:=xlDoubleQuote, FieldInfo:=Array(Array(0, 2), Array(13, 2), Array(63, 1), Array(73, 1), Array(104, 1), Array(221, 1), Array(676, 2), Array(684, 1)), TrailingMinusNumbers _
+        :=True
+        
+'remove extra columns
+Range("B:B,D:D,F:F,H:H").Delete Shift:=xlToLeft
+
+'reformat dates
+Range("D1").Select
+
+ColumnLen = ActiveSheet.Cells(Rows.Count, ActiveCell.Column).End(xlUp).Row
+
+i = ActiveCell.Column
+
+'pull out month
+
+ActiveCell.Offset(0, 1).Value = "=MID(RC[-1],4,2)"
+
+With Range(Cells(1, i + 1), Cells(ColumnLen, i + 1))
+        .FillDown
+        
+        End With
+        
+'pull out day
+ ActiveCell.Offset(0, 2).Value = "=RIGHT(RC[-2],2)"
+
+    With Range(Cells(1, i + 2), Cells(ColumnLen, i + 2))
+        .FillDown
+      
+    End With
+
+'pull out year
+ ActiveCell.Offset(0, 3).Value = "=LEFT(RC[-3],2)"
+
+    With Range(Cells(1, i + 3), Cells(ColumnLen, i + 3))
+        .FillDown
+       
+    End With
+   
+'create new year column
+ActiveCell.Offset(0, 4).Value = "=RC[-3]&""/""&RC[-2]&""/20""&RC[-1]"
+
+With Range(Cells(1, i + 4), Cells(ColumnLen, i + 4))
+    .FillDown
+
+End With
+
+'copies new column, pastes it as plain text, deletes extra columns
+ActiveCell.EntireColumn.Offset(0, 4).Copy
+ActiveCell.EntireColumn.Offset(0, 4).PasteSpecial Paste:=xlPasteValues, Operation:=xlNone
+Application.CutCopyMode = False
+
+Range("D:D,E:E, F:F, G:G").Delete Shift:=xlToLeft
+
+Range("D1").Select
+
+
+'convert text dates to date values and compare to todays date, TRUE: provider still actve FALSE: provider deactivated
+ActiveCell.Offset(0, 1).Value = "=DATEVALUE(RC[-1])"
+
+With Range(Cells(1, i + 1), Cells(ColumnLen, i + 1))
+        .FillDown
+        
+        End With
+
+ActiveCell.Offset(0, 2).Value = "=TODAY()"
+With Range(Cells(1, i + 2), Cells(ColumnLen, i + 2))
+        .FillDown
+        End With
+        
+ActiveCell.Offset(0, 3).Value = "=RC[-2]>RC[-1]"
+With Range(Cells(1, i + 3), Cells(ColumnLen, i + 3))
+        .FillDown
+        End With
+        
+'copy filtered data to newly created sheet (this is to remove blank rows)
+
+Columns("G:G").AutoFilter Field:=1, Criteria1:="TRUE"
+Range("A:G").ClearContents
+Columns("G:G").AutoFilter Field:=1, Criteria1:="<>"
+Range("A:G").Copy
+Sheets.Add Before:=Sheets(Sheets.Count)
+ActiveSheet.Paste
+Range("E:G").Delete Shift:=xlToLeft
+
+'delete old sheet
+Application.DisplayAlerts = False
+Sheets("DeleteMe").Delete
+Application.DisplayAlerts = True
+
+
+
+'remove extra spaces from provider's names
+
+For i = 1 To 7
+
+Range("C:C").Replace What:="  ", Replacement:=" ", LookAt:=xlPart, _
+        SearchOrder:=xlByRows, MatchCase:=False, SearchFormat:=False, _
+        ReplaceFormat:=False
+Next
+
+'title the columns and sheet
+
+Range("A1").Value = "SPI"
+Range("B1").Value = "NPI"
+Range("C1").Value = "Name"
+Range("D1").Value = "Deactivated Date"
+ActiveSheet.Name = "DeactivatedUsers"
+
+'autofit columns and move cursor to A1
+
+Cells.EntireColumn.AutoFit
+Range("A1").Select
+
+Application.ScreenUpdating = True
+
+End Sub

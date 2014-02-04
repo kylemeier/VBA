@@ -1,0 +1,193 @@
+Option Explicit
+
+Sub SplitAddress()
+
+'splits address column that doesn't contain proper delimeters
+
+
+Dim AddressArray As Variant
+Dim ColumnLen As Long
+Dim i As Long
+
+
+Application.ScreenUpdating = False
+
+ColumnLen = ActiveSheet.Cells(Rows.Count, ActiveCell.Column).End(xlUp).Row
+
+ActiveCell.EntireColumn.Replace What:=".", Replacement:="", Lookat:=xlPart, _
+        SearchOrder:=xlByRows, MatchCase:=False, SearchFormat:=False, _
+        ReplaceFormat:=False
+        
+ActiveCell.EntireColumn.Replace What:=",", Replacement:=" ", Lookat:=xlPart, _
+        SearchOrder:=xlByRows, MatchCase:=False, SearchFormat:=False, _
+        ReplaceFormat:=False
+        
+ActiveCell.EntireColumn.Replace What:="  ", Replacement:=" ", Lookat:=xlPart, _
+        SearchOrder:=xlByRows, MatchCase:=False, SearchFormat:=False, _
+        ReplaceFormat:=False
+        
+'add new columns and title them
+For i = 1 To 6
+
+ActiveCell.EntireColumn.Offset(0, 1).Insert
+Next
+
+ActiveCell = "Original Address"
+ActiveCell.Offset(0, 1).Value = "Address1"
+ActiveCell.Offset(0, 2).Value = "Address2"
+ActiveCell.Offset(0, 3).Value = "City"
+ActiveCell.Offset(0, 4).Value = "State"
+ActiveCell.Offset(0, 5).Value = "Zip"
+ActiveCell.Offset(0, 6).Value = "Check These Addresses"
+
+
+'run split function on selected cell
+
+For i = 2 To ColumnLen
+
+ActiveCell.Offset(1, 0).Select
+
+If Not ActiveCell.Value = "" Then
+
+AddressArray = NewAddress()
+
+ActiveCell.Offset(0, 1).Value = AddressArray(0)
+ActiveCell.Offset(0, 2).Value = AddressArray(1)
+ActiveCell.Offset(0, 3).Value = AddressArray(2)
+ActiveCell.Offset(0, 4).Value = AddressArray(3)
+ActiveCell.Offset(0, 5).Value = AddressArray(4)
+ActiveCell.Offset(0, 6).Value = AddressArray(5)
+
+'check for strange addresses by checking the zip and address1 columns
+    If ActiveCell.Offset(0, 1).Value = "" And Not ActiveCell.Offset(0, 5).Value = "" Then
+    
+    ActiveCell.Offset(0, 6).Value = Left(ActiveCell.Value, Len(ActiveCell.Value) - Len(ActiveCell.Offset(0, 4).Value) - Len(ActiveCell.Offset(0, 5)) - 2)
+
+    End If
+
+End If
+
+Next
+
+Cells.EntireColumn.AutoFit
+Application.ScreenUpdating = True
+
+End Sub
+
+
+
+Public Function NewAddress()
+
+Dim Address As String
+Dim AddressArray As Variant
+Dim LastSpace As Integer
+Dim Address1 As String
+Dim Address2 As String
+Dim City As String
+Dim State As String
+Dim Zip As String
+Dim AddressNoZip As String
+Dim AddressNoZipNoState As String
+Dim StreetTypes As Variant
+Dim LocationOfText As Integer
+Dim Address2City As String
+Dim MalformedAddress As String
+
+Address = Trim(ActiveCell)
+
+'skip blanks
+If Address = "" Then
+Exit Function
+End If
+
+'pull out zip
+
+LastSpace = InStrRev(Address, " ")
+
+Zip = Replace(expression:=Address, Find:=" ", Replace:="", Start:=LastSpace, Count:=1)
+
+'check if pulled value is a number
+If IsNumeric(Right(Zip, 4)) = False Then
+
+Address1 = ""
+Address2 = ""
+City = ""
+State = ""
+Zip = ""
+MalformedAddress = ActiveCell.Value
+
+AddressArray = Array(Address1, Address2, City, State, Zip, MalformedAddress)
+
+NewAddress = AddressArray
+
+Exit Function
+End If
+
+AddressNoZip = Left(Address, Len(Address) - Len(Zip) - 1)
+
+'pull out state
+
+LastSpace = InStrRev(AddressNoZip, " ")
+
+State = Replace(AddressNoZip, " ", "", LastSpace, 1)
+
+AddressNoZipNoState = Left(AddressNoZip, Len(AddressNoZip) - Len(State) - 1)
+
+'find name of street type to pull out address 1
+
+StreetTypes = Array(" court ", " parkway ", " boulevard ", " highway ", " road ", " lane ", _
+" circle ", " court ", " drive ", " place ", " street ", " avenue ", " blvd ", " pkway ", " hwy ", _
+" circ ", " rd ", " dr ", " ave ", " pl ", " ln ", " ct ", " st ", " pkwy ")
+
+Dim i As Byte
+Dim g As Range
+
+For i = 0 To 23
+
+LocationOfText = InStr(1, AddressNoZipNoState, StreetTypes(i), vbTextCompare)
+
+If LocationOfText > 0 Then
+
+Address1 = Left(AddressNoZipNoState, LocationOfText + Len(StreetTypes(i)) - 2)
+Address2City = Right(AddressNoZipNoState, Len(AddressNoZipNoState) - Len(Address1) - 1)
+
+Exit For
+
+End If
+
+Next
+
+'find any address 2's and pull them out
+
+Dim Address2Types As Variant
+
+Address2Types = Array("suite ", "apt ", "#")
+
+For i = 0 To 2
+
+LocationOfText = InStr(1, Address2City, Address2Types(i), vbTextCompare)
+
+If LocationOfText > 0 Then
+
+LocationOfText = InStr(Len(Address2Types(i)) + 2, Address2City, " ")
+
+Address2 = Left(Address2City, LocationOfText)
+City = Right(Address2City, Len(Address2City) - LocationOfText)
+
+End If
+Next
+
+'pull out city if no address 2
+If City = "" Then
+
+City = Address2City
+
+End If
+
+MalformedAddress = ""
+
+AddressArray = Array(Address1, Address2, City, State, Zip, MalformedAddress)
+
+NewAddress = AddressArray
+
+End Function
